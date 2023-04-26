@@ -11,6 +11,7 @@ const Color Color::Yellow = Color(1, 1, 0);
 const Color Color::Gray = Color(0.5, 0.5, 0.5);
 
 
+
 Color ColorFrom255(int r, int g, int b)
 {
 	return Color(r / 255.0, g / 255.0, b / 255.0);
