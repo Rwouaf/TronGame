@@ -14,11 +14,12 @@ struct V2
 	V2    GetNormalized() { float n = norm();  return V2(x/n,y/n); }
 };
 
-// comparaison sur des flottants... traitement spécial
+// comparaison sur des flottants... traitement spï¿½cial
 
 bool operator == (const V2 & a, const V2 & b);
+bool operator != (const V2 & a, const V2 & b);
 
-// redéfinition des opérateurs standards
+// redï¿½finition des opï¿½rateurs standards
 
 V2 operator + (const V2 & a, const V2 & b);
 V2 operator - (const V2 & a, const V2 & b);

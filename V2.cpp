@@ -1,7 +1,7 @@
 #include <iostream>
 #include "V2.h"
 
-// comparaison sur des flottants... traitement spécial
+// comparaison sur des flottants... traitement spï¿½cial
 
 bool operator == (const V2 & a, const V2 & b)
 {
@@ -10,7 +10,12 @@ bool operator == (const V2 & a, const V2 & b)
 	return t.norm() < epsilon;
 }
 
-// redéfinition des opérateurs standards
+bool operator != (const V2 & a, const V2 & b)
+{
+	return !(a == b);
+}
+
+// redï¿½finition des opï¿½rateurs standards
 
 V2 operator + (const V2 & a, const V2 & b) {  return V2(a.x + b.x, a.y + b.y); }
 V2 operator - (const V2 & a, const V2 & b) {  return V2(a.x - b.x, a.y - b.y); }
