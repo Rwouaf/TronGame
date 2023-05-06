@@ -10,7 +10,15 @@
  
 using namespace std;
   
-
+//struct moto
+//Pos : possition de la moto
+//Size : taille de la moto
+//Dir : direction de la moto
+//previousPos : tableau de V2 qui contient les positions precedentes de la moto
+//IdSpriteUP : id de la texture de la moto quand elle va vers le haut
+//IdSpriteLeft : id de la texture de la moto quand elle va vers la gauche
+//IdSpriteRight : id de la texture de la moto quand elle va vers la droite
+//IdSpriteDown : id de la texture de la moto quand elle va vers le bas
 struct moto
 {
 	V2 Pos;
@@ -28,6 +36,7 @@ struct moto
 		Size = size;
 		Dir = dir;
 	}
+	//initialise les textures de la moto
 	void InitTextures(string textureUP, string textureLeft, string textureRight,string textureDown)
 	{
 		IdSpriteUP = G2D::extractTextureFromPPM(textureUP, true);
@@ -48,15 +57,16 @@ struct GameData
 	}
 };
 
-
+//enum Ecran : permet de definir les differents ecrans du jeu
 enum Ecran {
     ECRAN_ACCEUIL,
     ECRAN_JEU,
    	ECRAN_END
 };
-
+//variable qui contient l'ecran actuel
 Ecran ecran = ECRAN_ACCEUIL;
 
+//fonction qui gere l'ecran d'acceuil
 Ecran gestionEcrantAcceuil(const GameData& G){
 	
 	G2D::clearScreen(Color::Black);
@@ -70,6 +80,7 @@ Ecran gestionEcrantAcceuil(const GameData& G){
 	return ECRAN_ACCEUIL;
 }
 
+//fonction qui gere l'ecran de jeu
 Ecran gestionEcrantJeu(const GameData& G){
 	
 	G2D::clearScreen(Color::Black);
@@ -79,35 +90,60 @@ Ecran gestionEcrantJeu(const GameData& G){
 
 	//dessine un rectangle de couleur noir un peu plus petit que le rectangle bleu
 	G2D::drawRectangle(V2(50, 50), V2(1500, 800), Color::Black, 1);
-	
+
+	//gestion des spirites de la moto jaune en fonction de la direction de la moto
 	int idspriteY;
 	if (G.motoY.Dir == V2(-1,0))  idspriteY = G.motoY.IdSpriteLeft;
 	if (G.motoY.Dir == V2(1,0)) idspriteY = G.motoY.IdSpriteRight;
 	if (G.motoY.Dir == V2(0,-1))  idspriteY = G.motoY.IdSpriteDown;
 	if (G.motoY.Dir == V2(0,1)) idspriteY = G.motoY.IdSpriteUP;
 
+	//gestion des spirites de la moto bleu en fonction de la direction de la moto
 	int idspriteB;
 	if (G.motoB.Dir == V2(-1,0))  idspriteB = G.motoB.IdSpriteLeft;
 	if (G.motoB.Dir == V2(1,0)) idspriteB = G.motoB.IdSpriteRight;
 	if (G.motoB.Dir == V2(0,-1))  idspriteB = G.motoB.IdSpriteDown;
 	if (G.motoB.Dir == V2(0,1)) idspriteB = G.motoB.IdSpriteUP;
 
-	G2D::drawRectWithTexture(idspriteY,G.motoY.Pos, G.motoY.Size);
-	G2D::drawRectWithTexture(idspriteB,G.motoB.Pos, G.motoB.Size);
-
 	//si previousePos n'est vide pas vide, on dessine un rectangle de couleur jaune à l'arrière de la moto
 	if (G.motoY.previousPos.size() > 0) {
 		for (int i = 0; i < G.motoY.previousPos.size(); i++) {
-			G2D::drawRectangle(G.motoY.previousPos[i], V2(5,5), Color::Yellow, 1);
+			G2D::drawRectangle(G.motoY.previousPos[i]+V2(15,15), V2(5,5), Color::Yellow, 1);
 		}
 	}
+	//same pour la moto bleu
+	if (G.motoB.previousPos.size() > 0) {
+		for (int i = 0; i < G.motoB.previousPos.size(); i++) {
+			G2D::drawRectangle(G.motoB.previousPos[i]+V2(15,15), V2(5,5), Color::Cyan, 1);
+		}
+	}
+
+	//dessine les motos
+	G2D::drawRectWithTexture(idspriteY,G.motoY.Pos, G.motoY.Size);
+	G2D::drawRectWithTexture(idspriteB,G.motoB.Pos, G.motoB.Size);
+
+
 
 	G2D::Show();
 	return ECRAN_JEU;
 }
+//fonction qui gere l'ecran de fin
+Ecran gestionEcrantEnd(const GameData& G){
+	
+	G2D::clearScreen(Color::Black);
+	//affiche le texte au centre de l'ecran
+	G2D::drawStringFontMono(V2(400, 400), "Appuyer sur Entrer pour recommencer",35 , 5, Color::Yellow);
+	G2D::drawStringFontMono(V2(400, 400), "Appuyer sur Entrer pour recommencer",35 , 4, Color::Cyan);
+	G2D::Show();
+	if (G2D::isKeyPressed(Key::ENTER)) {
+		return ECRAN_JEU;
+	}
+	return ECRAN_END;
+}
 
 void render(const GameData& G)  // const ref => garantit que l'on ne modifie pas les donnes de G
 {
+	//en fonction de l'ecran actuel, on appelle la fonction qui gere l'ecran
 	switch (ecran)
 	{
 		case ECRAN_ACCEUIL:
@@ -123,13 +159,14 @@ void render(const GameData& G)  // const ref => garantit que l'on ne modifie pas
 
 
 
-//fonction de déplacement de la moto
+//fonction de déplacement de la motoY
 void moveMotoY(GameData& G)
 {
 	G.motoY.Pos = G.motoY.Pos + G.motoY.Dir * 3;
 	G.motoY.previousPos.push_back(G.motoY.Pos);
 }
 
+//fonction de déplacement de la motoB
 void moveMotoB(GameData& G)
 {
 	G.motoB.Pos = G.motoB.Pos + G.motoB.Dir * 3;
@@ -158,6 +195,7 @@ void gestionToucheJ1(GameData& G)
 	
 }
 
+//gestion des touches pour le joueur2 et l'empêche de faire demi-tour
 void gestionToucheJ2(GameData& G)
 {
 	if (G2D::isKeyPressed(Key::UP) && (G.motoB.Dir != V2(0, -1)))
@@ -179,15 +217,53 @@ void gestionToucheJ2(GameData& G)
 	
 }
 
+
+//fonction qui return true si il y a une collision entre deux rectangles
+bool RectCollision(const V2& pos1, const V2& size1, const V2& pos2, const V2& size2) {
+    return (pos1.x < pos2.x + size2.x && pos1.x + size1.x > pos2.x && pos1.y < pos2.y + size2.y && pos1.y + size1.y > pos2.y);
+}
+
+//fonction qui return true si il y a une collision entre deux motos
+bool Collision(const GameData& G)
+{
+	for (int i = 0; i < G.motoY.previousPos.size(); i++) {
+		if (RectCollision(G.motoY.previousPos[i], G.motoY.Size, G.motoB.Pos, G.motoB.Size) || RectCollision(G.motoY.previousPos[i], G.motoY.Size, G.motoY.Pos, G.motoY.Size)) {
+			return true;
+		}
+	}
+	for (int i = 0; i < G.motoB.previousPos.size(); i++) {
+		if (RectCollision(G.motoB.previousPos[i], G.motoB.Size, G.motoY.Pos, G.motoY.Size) || RectCollision(G.motoB.previousPos[i], G.motoB.Size, G.motoB.Pos, G.motoB.Size)) {
+			return true;
+		}
+	}
+	return false;
+}
+
+//fonction qui reset le jeu
+void reset(GameData& G)
+{
+	G.motoY.Pos = V2(100, 100);
+	G.motoY.Dir = V2(1, 0);
+	G.motoY.previousPos.clear();
+	G.motoB.Pos = V2(1500, 800);
+	G.motoB.Dir = V2(-1, 0);
+	G.motoB.previousPos.clear();
+}
+
 void Logic(GameData& G)
 {
-	moveMotoY(G);
-	moveMotoB(G);
-	gestionToucheJ1(G);
-	gestionToucheJ2(G);
+	if (ecran == ECRAN_JEU){
+		moveMotoY(G);
+		moveMotoB(G);
+		gestionToucheJ1(G);
+		gestionToucheJ2(G);
+		if (Collision(G)) {
+			cout << "collision" << endl;
+		}
+	}
 }
  
-
+//fonction de gestion des textures
 void AssetsInit(GameData & G)
 {
 	G.motoY.InitTextures(".//assets//motoUP.ppm",".//assets//motoLeft.ppm",".//assets//motoRight.ppm",".//assets//motoDown.ppm");
