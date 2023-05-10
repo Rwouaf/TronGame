@@ -6,6 +6,8 @@
 #include <iostream>
 #include <string>
 #include "G2D.h"
+#include <thread>
+#include <chrono>
  
  
 using namespace std;
@@ -48,11 +50,67 @@ struct moto
 	}
 };
 
+struct explosions
+{
+	int idSprite1;
+	int idSprite2;
+	int idSprite3;
+	int idSprite4;
+	int idSprite5;
+	int idSprite6;
+	
+	V2 Pos;
+	V2 Size;
+
+	explosions(V2 pos, V2 size)
+	{
+		Pos = pos;
+		Size = size;
+	}
+	//initialise les textures de l'explosion
+	void InitTextures(string texture1, string texture2, string texture3, string texture4, string texture5, string texture6)
+	{
+		idSprite1 = G2D::extractTextureFromPPM(texture1, true);
+		idSprite2 = G2D::extractTextureFromPPM(texture2, true);
+		idSprite3 = G2D::extractTextureFromPPM(texture3, true);
+		idSprite4 = G2D::extractTextureFromPPM(texture4, true);
+		idSprite5 = G2D::extractTextureFromPPM(texture5, true);
+		idSprite6 = G2D::extractTextureFromPPM(texture6, true);
+		int zoom = 2;
+		Size = Size * zoom;
+	}
+
+};
+
+struct Bonus
+{
+	V2 Pos;
+	V2 Size;
+	int IdSprite;
+
+	Bonus(V2 pos, V2 size)
+	{
+		Pos = pos;
+		Size = size;
+	}
+	//initialise les textures du bonus
+	void InitTextures(string texture)
+	{
+		IdSprite = G2D::extractTextureFromPPM(texture, true);
+		int zoom = 2;
+		Size = Size * zoom;
+	}
+};
+
+
 struct GameData
 {
 	moto motoY = moto(V2(500, 425), V2(20, 20), V2(0, 1));
 	moto motoB = moto(V2(1000, 425), V2(20, 20), V2(0, -1));
-     
+
+	explosions explosion = explosions(V2(0, 0), V2(20, 20));
+
+
 	GameData() {
 	}
 };
@@ -61,7 +119,8 @@ struct GameData
 enum Ecran {
     ECRAN_ACCEUIL,
     ECRAN_JEU,
-   	ECRAN_END
+   	ECRAN_J1_GAGNE,
+	ECRAN_J2_GAGNE,
 };
 //variable qui contient l'ecran actuel
 Ecran ecran = ECRAN_ACCEUIL;
@@ -79,6 +138,7 @@ Ecran gestionEcrantAcceuil(const GameData& G){
 	}
 	return ECRAN_ACCEUIL;
 }
+
 
 //fonction qui gere l'ecran de jeu
 Ecran gestionEcrantJeu(const GameData& G){
@@ -122,23 +182,35 @@ Ecran gestionEcrantJeu(const GameData& G){
 	G2D::drawRectWithTexture(idspriteY,G.motoY.Pos, G.motoY.Size);
 	G2D::drawRectWithTexture(idspriteB,G.motoB.Pos, G.motoB.Size);
 
-
-
 	G2D::Show();
 	return ECRAN_JEU;
 }
-//fonction qui gere l'ecran de fin
-Ecran gestionEcrantEnd(const GameData& G){
+//fonction qui gere l'ecran de win de J1
+Ecran gestionEcrantJ1Gagne(const GameData& G){
 	
 	G2D::clearScreen(Color::Black);
 	//affiche le texte au centre de l'ecran
-	G2D::drawStringFontMono(V2(400, 400), "Appuyer sur Entrer pour recommencer",35 , 5, Color::Yellow);
-	G2D::drawStringFontMono(V2(400, 400), "Appuyer sur Entrer pour recommencer",35 , 4, Color::Cyan);
+	G2D::drawStringFontMono(V2(400, 400), "Joueur 1 a gagne",35 , 5, Color::Yellow);
+	G2D::drawStringFontMono(V2(350, 200), "Press enter to restart",35 , 5, Color::Yellow);
 	G2D::Show();
 	if (G2D::isKeyPressed(Key::ENTER)) {
-		return ECRAN_JEU;
+		return ECRAN_ACCEUIL;
 	}
-	return ECRAN_END;
+	return ECRAN_J1_GAGNE;
+}
+
+//fonction qui gere l'ecran de win de J2
+Ecran gestionEcrantJ2Gagne(const GameData& G){
+	
+	G2D::clearScreen(Color::Black);
+	//affiche le texte au centre de l'ecran
+	G2D::drawStringFontMono(V2(400, 400), "Joueur 2 a gagne",35 , 5, Color::Cyan);
+	G2D::drawStringFontMono(V2(350, 200), "Press enter to restart",35 , 5, Color::Cyan);
+	G2D::Show();
+	if (G2D::isKeyPressed(Key::ENTER)) {
+		return ECRAN_ACCEUIL;
+	}
+	return ECRAN_J2_GAGNE;
 }
 
 void render(const GameData& G)  // const ref => garantit que l'on ne modifie pas les donnes de G
@@ -152,7 +224,13 @@ void render(const GameData& G)  // const ref => garantit que l'on ne modifie pas
 		case ECRAN_JEU:
 			ecran = gestionEcrantJeu(G);
 			break;
-		case ECRAN_END:
+		case ECRAN_J1_GAGNE:
+			ecran = gestionEcrantJ1Gagne(G);
+			break;
+		case ECRAN_J2_GAGNE:
+			ecran = gestionEcrantJ2Gagne(G);
+			break;
+		default:
 			break;
 	}
 }
@@ -218,26 +296,60 @@ void gestionToucheJ2(GameData& G)
 }
 
 
-//fonction qui return true si il y a une collision entre deux rectangles
 bool RectCollision(const V2& pos1, const V2& size1, const V2& pos2, const V2& size2) {
     return (pos1.x < pos2.x + size2.x && pos1.x + size1.x > pos2.x && pos1.y < pos2.y + size2.y && pos1.y + size1.y > pos2.y);
 }
 
-//fonction qui return true si il y a une collision entre deux motos
-bool Collision(const GameData& G)
+
+bool CollisionY(const GameData& G)
 {
-	for (int i = 0; i < G.motoY.previousPos.size(); i++) {
-		if (RectCollision(G.motoY.previousPos[i], G.motoY.Size, G.motoB.Pos, G.motoB.Size) || RectCollision(G.motoY.previousPos[i], G.motoY.Size, G.motoY.Pos, G.motoY.Size)) {
+	for (int i = 0; i < G.motoB.previousPos.size(); i++)
+	{
+		if (RectCollision(G.motoY.Pos, V2(10,10), G.motoB.previousPos[i], V2(2,2)))
+		{
+			cout << "Y perd" << endl;
 			return true;
 		}
-	}
-	for (int i = 0; i < G.motoB.previousPos.size(); i++) {
-		if (RectCollision(G.motoB.previousPos[i], G.motoB.Size, G.motoY.Pos, G.motoY.Size) || RectCollision(G.motoB.previousPos[i], G.motoB.Size, G.motoB.Pos, G.motoB.Size)) {
+		if (RectCollision(G.motoY.Pos, V2(10,10), G.motoY.previousPos[i-20], V2(2,2)))
+		{
+			cout << "Y autodestruction" << endl;
 			return true;
 		}
 	}
 	return false;
 }
+
+bool CollisionB(const GameData& G)
+{
+	for (int i = 0; i < G.motoY.previousPos.size(); i++)
+	{
+		if (RectCollision(G.motoB.Pos, V2(10,10), G.motoY.previousPos[i], V2(2,2)))
+		{
+			cout << "B perd" << endl;
+			return true;
+		}
+		if (RectCollision(G.motoB.Pos, V2(10,10), G.motoB.previousPos[i-20], V2(2,2)))
+		{
+			cout << "B autodestruction" << endl;
+			return true;
+		}
+	}
+	return false;
+}
+
+
+//fonction qui return true si une moto sort du rectangle noir
+int OutOfBounds(const GameData& G)
+{
+	if (G.motoY.Pos.x < 50 || G.motoY.Pos.x > 1520 || G.motoY.Pos.y < 50 || G.motoY.Pos.y > 810) {
+		return 1;
+	}
+	if (G.motoB.Pos.x < 50 || G.motoB.Pos.x > 1520 || G.motoB.Pos.y < 50 || G.motoB.Pos.y > 810) {
+		return 2;
+	}
+	return 0;
+}
+
 
 //fonction qui reset le jeu
 void reset(GameData& G)
@@ -250,6 +362,21 @@ void reset(GameData& G)
 	G.motoB.previousPos.clear();
 }
 
+//fonction de fin de jeu
+void endGame(GameData& G)
+{
+	if (CollisionY(G) || OutOfBounds(G) == 1)
+	{
+		ecran = ECRAN_J2_GAGNE;
+		reset(G);
+	}
+	if (CollisionB(G) || OutOfBounds(G) == 2)
+	{
+		ecran = ECRAN_J1_GAGNE;
+		reset(G);
+	}
+} 
+
 void Logic(GameData& G)
 {
 	if (ecran == ECRAN_JEU){
@@ -257,9 +384,7 @@ void Logic(GameData& G)
 		moveMotoB(G);
 		gestionToucheJ1(G);
 		gestionToucheJ2(G);
-		if (Collision(G)) {
-			cout << "collision" << endl;
-		}
+		endGame(G);
 	}
 }
  
@@ -268,6 +393,7 @@ void AssetsInit(GameData & G)
 {
 	G.motoY.InitTextures(".//assets//motoUP.ppm",".//assets//motoLeft.ppm",".//assets//motoRight.ppm",".//assets//motoDown.ppm");
 	G.motoB.InitTextures(".//assets//motoUP2.ppm",".//assets//motoLeft2.ppm",".//assets//motoRight2.ppm",".//assets//motoDown2.ppm");
+	G.explosion.InitTextures(".//explosions//explosion1.ppm",".//explosions//explosion2.ppm",".//explosions//explosion3.ppm",".//explosions//explosion4.ppm",".//explosions//explosion5.ppm",".//explosions//explosion6.ppm");
 }
 
 int main(int argc, char* argv[])
