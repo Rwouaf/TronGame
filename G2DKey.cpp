@@ -90,7 +90,7 @@ void _G2D::keySpecialUp(int key, int x, int y) { activeKeys[specialKeyTable[key]
 
 ///////////////////////////////////////////////////////////////
 //
-//  exportées dans G2D
+//  exportï¿½es dans G2D
 
 
 bool G2D::isOnPause()
